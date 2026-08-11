@@ -1,0 +1,353 @@
+/* ---- Palette ancrée dans Toulouse : la ville rose, sa brique ---- */
+:root {
+  --plaster:      #f7f2ee;  /* fond, enduit clair */
+  --plaster-deep: #efe6df;
+  --brick:        #b5495b;  /* brique rose foncée, couleur signature */
+  --brick-dim:    #9c3e4e;
+  --aubergine:    #2e2230;  /* encre, texte principal */
+  --slate:        #6b5d63;  /* texte secondaire */
+  --line:         #e3d7ce;
+  --ft:           #2f6f4e;  /* vert France Travail */
+  --ft-bg:        #e2f1e8;
+  --mj:           #1f5f8b;  /* bleu Meteojob */
+  --mj-bg:        #e2eef7;
+  --adz:          #a2591b;  /* ocre Adzuna */
+  --adz-bg:       #f6e9d8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--plaster);
+  color: var(--aubergine);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+/* ---- Barre du haut ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  background: var(--aubergine);
+  color: var(--plaster);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 34px; height: 34px;
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, var(--brick) 0%, var(--brick-dim) 100%);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12);
+  position: relative;
+}
+.brand-mark::after {
+  /* clin d'œil aux assises de brique */
+  content: "";
+  position: absolute; inset: 7px;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,0.28) 0 2px,
+      transparent 2px 6px);
+  border-radius: 2px;
+}
+.brand-text h1 { margin: 0; font-size: 19px; letter-spacing: 0.2px; }
+.brand-text p  { margin: 0; font-size: 12px; color: #cbb8bf; }
+
+.ghost-btn {
+  background: transparent;
+  color: var(--plaster);
+  border: 1px solid rgba(255,255,255,0.35);
+  padding: 8px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.ghost-btn:hover { border-color: var(--brick); color: #fff; }
+
+/* ---- Boutons pleins ---- */
+.solid-btn {
+  background: var(--brick);
+  color: #fff;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.solid-btn:hover { background: var(--brick-dim); }
+.solid-btn:focus-visible,
+.ghost-btn:focus-visible,
+input:focus-visible { outline: 2px solid var(--brick); outline-offset: 2px; }
+
+/* ---- Réglages ---- */
+.settings {
+  background: var(--plaster-deep);
+  border-bottom: 1px solid var(--line);
+  padding: 20px 28px;
+}
+.settings.hidden { display: none; }
+.settings-intro { margin: 0 0 14px; font-size: 13px; color: var(--slate); max-width: 640px; }
+.field-row { display: flex; gap: 18px; flex-wrap: wrap; }
+.field-row label { display: flex; flex-direction: column; font-size: 12px; color: var(--slate); gap: 5px; flex: 1; min-width: 240px; }
+.field-row input {
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+}
+.settings-actions { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+.save-status { font-size: 13px; color: var(--ft); }
+
+/* ---- Recherche ---- */
+.search {
+  display: flex;
+  gap: 12px;
+  padding: 22px 28px 12px;
+}
+.search input {
+  flex: 1;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fff;
+}
+
+/* ---- Filtres ---- */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 4px 28px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.chk { font-size: 13px; color: var(--slate); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.status-line { margin-left: auto; font-size: 13px; color: var(--slate); }
+
+/* ---- Zone CV / IA ---- */
+.cv {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 28px;
+  background: var(--plaster-deep);
+  border-bottom: 1px solid var(--line);
+}
+.cv-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--aubergine);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 9px 14px;
+}
+.cv-label input { display: none; }
+.cv-hint { font-size: 12.5px; color: var(--slate); }
+
+/* Bouton de classement IA : plein, lisible sur fond clair */
+.match-btn {
+  background: var(--aubergine);
+  color: #fff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.match-btn:hover:not(:disabled) { background: #453449; }
+.match-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.match-btn:focus-visible { outline: 2px solid var(--brick); outline-offset: 2px; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--brick-dim);
+  font-size: 12.5px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.link-btn.hidden { display: none; }
+
+/* ---- Pied de page ---- */
+.site-footer {
+  text-align: center;
+  font-size: 11.5px;
+  color: #a3949a;
+  padding: 18px 0 22px;
+}
+
+/* ---- Badge de correspondance IA ---- */
+.match {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 2px;
+}
+.match.high { background: #dcfce7; color: #15803d; }
+.match.mid  { background: #fef3c7; color: #b45309; }
+.match.low  { background: #f1e7e9; color: #8a6b72; }
+.match-reason { font-size: 12px; color: var(--brick-dim); font-style: italic; }
+
+/* ---- Résultats ---- */
+.results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding: 22px 28px 40px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--brick);
+  border-radius: 10px;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.08s ease, box-shadow 0.12s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(46,34,48,0.10); }
+.card.src-ft { border-left-color: var(--ft); }
+.card.src-mj { border-left-color: var(--mj); }
+.card.src-adz { border-left-color: var(--adz); }
+
+.badge {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.badge.ft { background: var(--ft-bg); color: var(--ft); }
+.badge.mj { background: var(--mj-bg); color: var(--mj); }
+.badge.adz { background: var(--adz-bg); color: var(--adz); }
+
+.card-title { font-size: 15.5px; font-weight: 650; line-height: 1.3; }
+.card-meta { font-size: 13px; color: var(--slate); }
+.card-meta .salary { color: var(--brick-dim); font-weight: 600; }
+.card-desc { font-size: 12.5px; color: #7c6f75; }
+
+/* ---- État vide ---- */
+.empty { padding: 60px 28px; text-align: center; color: var(--slate); }
+.empty.hidden { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
+
+/* ---- Mobile : la page doit être confortable sur téléphone ---- */
+@media (max-width: 560px) {
+  .topbar { padding: 14px 16px; }
+  .brand-text h1 { font-size: 17px; }
+  .search { flex-direction: column; padding: 16px; }
+  .search input { width: 100%; }
+  .solid-btn { width: 100%; }
+  .filters { flex-wrap: wrap; padding: 4px 16px 14px; }
+  .status-line { margin-left: 0; width: 100%; margin-top: 6px; }
+  .cv { padding: 14px 16px; }
+  .cv-hint { width: 100%; }
+  .results { grid-template-columns: 1fr; padding: 16px; }
+}
+
+/* ---- Champ ville ---- */
+.ville-input { flex: 0 0 150px; }
+
+/* ---- Panneau profil éditable ---- */
+.profile-panel {
+  background: var(--plaster-deep);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 28px;
+}
+.profile-panel.hidden { display: none; }
+.profile-intro { margin: 0 0 12px; font-size: 13px; color: var(--slate); max-width: 680px; }
+.profile-field {
+  display: flex; flex-direction: column; gap: 5px;
+  font-size: 12px; color: var(--slate); margin-bottom: 12px;
+}
+.profile-field input, .profile-field textarea {
+  padding: 9px 11px; border: 1px solid var(--line); border-radius: 6px;
+  font-size: 14px; background: #fff; font-family: inherit; resize: vertical;
+}
+.profile-actions { display: flex; align-items: center; gap: 12px; }
+
+/* ---- Bouton lettre sur les cartes ---- */
+.letter-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--brick);
+  color: var(--brick-dim);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.letter-btn:hover { background: var(--brick); color: #fff; }
+
+/* ---- Modale ---- */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(46,34,48,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 16px;
+}
+.modal.hidden { display: none; }
+.modal-box {
+  background: var(--plaster);
+  border-radius: 12px;
+  max-width: 640px; width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  padding: 20px 22px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+}
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.modal-hint { font-size: 12.5px; color: var(--slate); margin: 0 0 12px; }
+.modal-box textarea {
+  width: 100%; box-sizing: border-box;
+  padding: 12px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 14px; font-family: inherit; line-height: 1.5; background: #fff;
+  resize: vertical;
+}
+.modal-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+
+@media (max-width: 560px) {
+  .ville-input { flex: 1 1 100%; }
+  .profile-panel { padding: 16px; }
+}
+
+/* ---- Note de confidentialité ---- */
+.privacy-note {
+  margin: 26px 28px 0;
+  padding: 12px 16px;
+  background: var(--plaster-deep);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.55;
+}
+.site-footer a { color: inherit; text-decoration: underline; }
+.site-footer a:hover { color: var(--brick-dim); }
+@media (max-width: 560px) { .privacy-note { margin: 20px 16px 0; } }

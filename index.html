@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JobTrack — offres + IA</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div class="brand-text">
+        <h1>JobTrack</h1>
+        <p>3 sources réunies · classement et lettres par IA</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Étape 1 : le CV d'abord -->
+  <section class="cv">
+    <label class="cv-label">
+      <input id="cvFile" type="file" accept="application/pdf" />
+      <span id="cvBtnText">📄 Charger mon CV (PDF)</span>
+    </label>
+    <button id="editProfileBtn" class="link-btn hidden" type="button">Voir / modifier mon profil</button>
+    <button id="forgetBtn" class="link-btn hidden" type="button">Oublier mon CV</button>
+    <span id="cvHint" class="cv-hint">Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.</span>
+  </section>
+
+  <!-- Panneau profil éditable -->
+  <section id="profilePanel" class="profile-panel hidden">
+    <p class="profile-intro">
+      Ce résumé sert au classement des offres et aux lettres de motivation.
+      Corrige-le librement : c'est TA version qui fait foi, pas celle de l'IA.
+    </p>
+    <label class="profile-field">Titre du profil
+      <input id="profHeadline" type="text" />
+    </label>
+    <label class="profile-field">Résumé du parcours (~100 mots)
+      <textarea id="profSummary" rows="6"></textarea>
+    </label>
+    <label class="profile-field">Compétences (séparées par des virgules)
+      <input id="profSkills" type="text" />
+    </label>
+    <div class="profile-actions">
+      <button id="saveProfileBtn" class="solid-btn" type="button">Enregistrer mon profil</button>
+      <span id="profileStatus" class="save-status"></span>
+    </div>
+  </section>
+
+  <!-- Étape 2 : recherche -->
+  <section class="search">
+    <input id="ville" type="text" class="ville-input" value="Toulouse"
+           placeholder="Ville" autocomplete="off" />
+    <input id="keyword" type="text"
+           placeholder="Intitulé du poste — ex. développeur, comptable…"
+           autocomplete="off" />
+    <button id="searchBtn" class="solid-btn" type="button">Rechercher</button>
+  </section>
+
+  <section class="filters">
+    <label class="chk"><input type="checkbox" id="srcFT" checked /> France Travail</label>
+    <label class="chk"><input type="checkbox" id="srcADZ" checked /> Adzuna</label>
+    <label class="chk"><input type="checkbox" id="srcMJ" checked /> Meteojob</label>
+    <button id="matchBtn" class="match-btn" type="button" disabled>
+      ✨ Classer selon mon CV
+    </button>
+    <span id="statusLine" class="status-line"></span>
+  </section>
+
+  <main id="results" class="results"></main>
+
+  <div id="emptyState" class="empty">
+    <p>Charge ton CV ou lance une recherche pour voir les offres.</p>
+  </div>
+
+  <!-- Modale lettre de motivation -->
+  <div id="letterModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <strong id="letterTitle">Brouillon de lettre</strong>
+        <button id="letterClose" class="link-btn" type="button">Fermer</button>
+      </div>
+      <p class="modal-hint">
+        C'est un brouillon : personnalise-le avant de l'envoyer (une lettre IA brute, ça se repère).
+      </p>
+      <textarea id="letterText" rows="14"></textarea>
+      <div class="modal-actions">
+        <button id="letterCopy" class="solid-btn" type="button">Copier</button>
+        <span id="letterStatus" class="save-status"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="privacy-note">
+    🔒 <strong>Confidentialité</strong> — Ton CV n'est jamais stocké sur nos serveurs : il est transmis
+    une seule fois à l'API Claude (Anthropic) pour en extraire un résumé, puis oublié côté serveur.
+    Ce résumé est conservé uniquement dans TON navigateur (localStorage) et effaçable via
+    « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses propres cookies techniques.
+    Aucune donnée n'est revendue ni partagée au-delà de ces traitements.
+  </div>
+
+  <footer class="site-footer">
+    Développé par <a href="https://www.instagram.com/tidianetone/" target="_blank" rel="noopener noreferrer">Tidiane Sow</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
