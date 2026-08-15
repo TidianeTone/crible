@@ -8,7 +8,11 @@ let cvFileName = "";
 let hasSearched = false; // distingue « rien cherché » de « aucun résultat »
 const tailorCache = new Map(); // clé = url de l'offre -> résultat des 3 étapes
 
+let howtoForced = false;   // l'utilisateur a rouvert « Comment ça marche ? »
+let howtoDismissed = false; // il l'a masqué une fois : on ne le réimpose plus
+
 const PROFILE_KEY = "jobtrackProfile";
+const HOWTO_KEY = "jobtrackHowtoHidden";
 const LANG_KEY = "jobtrackLang";
 const CVNAME_KEY = "jobtrackCvName";
 
@@ -40,6 +44,21 @@ const I18N = {
     copy: "Copier",
     copied: "Copié ✓",
     madeBy: "Développé par",
+    // L'appli s'explique elle-même
+    howShow: "Comment ça marche ?",
+    howHide: "Masquer",
+    howTitle: "À quoi sert JobTrack ?",
+    howLead: "JobTrack réunit les offres au même endroit et se sert de ton CV comme filtre : tu ne lis que ce qui te concerne, et tu postules avec un CV taillé pour l'offre.",
+    how1t: "Tu charges ton CV (PDF)",
+    how1d: "Il est lu une fois, pour en sortir un profil : titre, résumé, compétences, expériences. Le PDF n'est stocké nulle part. Le profil reste dans ton navigateur et tu peux le corriger à la main — c'est ta version qui compte.",
+    how2t: "Les offres viennent de 3 sources",
+    how2d: "France Travail, Adzuna (l'équivalent d'Indeed) et Meteojob, interrogés en même temps pour ta ville et ton intitulé de poste. Une seule liste au bout.",
+    how3t: "Chaque offre est notée pour toi",
+    how3d: "Un score en %, et une phrase qui dit pourquoi. Les meilleures remontent en haut. Tu ne lis plus les 40 autres.",
+    how4t: "Tu repars avec une lettre et un CV adaptés",
+    how4d: "« Brouillon de lettre » te donne une base à personnaliser. « Adapter mon CV » retravaille tes expériences pour cette offre précise, en trois passes : ce qu'un recruteur voit en 10 secondes, une réécriture chiffrée, puis une simulation de lecture au milieu de 200 CV et du filtre ATS.",
+    howFoot: "<strong>Ce que l'appli ne fait pas :</strong> inventer un truc qui n'est pas dans ton CV. Quand un chiffre lui manque, elle écrit <code>[à chiffrer]</code> et te laisse le remplir. Elle ne postule pas à ta place, et elle ne va pas te rendre parfait à l'entretien — là-dessus t'es tout seul.",
+
     privacy: "🔒 <strong>Confidentialité</strong> — Ton CV n'est jamais stocké sur nos serveurs : le PDF est transmis une seule fois à l'API Claude (Anthropic) pour en extraire un profil et tes expériences, puis oublié côté serveur. Le PDF lui-même n'est conservé nulle part. Le profil extrait reste uniquement dans TON navigateur (localStorage) et s'efface via « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses propres cookies techniques. Aucune donnée n'est revendue ni partagée au-delà de ces traitements.",
 
     // Progression
@@ -113,6 +132,20 @@ const I18N = {
     copy: "Copy",
     copied: "Copied ✓",
     madeBy: "Built by",
+    howShow: "How does it work?",
+    howHide: "Hide",
+    howTitle: "What is JobTrack for?",
+    howLead: "JobTrack pulls the postings into one place and uses your CV as the filter: you only read what concerns you, and you apply with a CV cut for that job.",
+    how1t: "You upload your CV (PDF)",
+    how1d: "It gets read once, to pull out a profile: headline, summary, skills, experience. The PDF is stored nowhere. The profile stays in your browser and you can edit it by hand — your version is the one that counts.",
+    how2t: "Jobs come in from 3 sources",
+    how2d: "France Travail, Adzuna (the Indeed equivalent) and Meteojob, queried at once for your city and job title. One list at the end.",
+    how3t: "Every job is scored for you",
+    how3d: "A % score, and one line saying why. The best matches rise to the top. You stop reading the other 40.",
+    how4t: "You leave with a tailored letter and CV",
+    how4d: "“Cover letter draft” gives you a base to personalise. “Tailor my CV” reworks your experience for that specific posting in three passes: what a recruiter sees in 10 seconds, a quantified rewrite, then a simulated read in the middle of 200 CVs and the ATS filter.",
+    howFoot: "<strong>What the app does not do:</strong> invent something that is not in your CV. When a number is missing it writes <code>[to quantify]</code> and leaves it to you. It does not apply on your behalf, and it will not make you perfect in the interview — that part is on you.",
+
     privacy: "🔒 <strong>Privacy</strong> — Your CV is never stored on our servers: the PDF is sent once to the Claude API (Anthropic) to extract a profile and your experience, then forgotten server-side. The PDF itself is kept nowhere. The extracted profile stays only in YOUR browser (localStorage) and is erased via “Forget my CV”. The host (Vercel) may set its own technical cookies. No data is sold or shared beyond these operations.",
 
     analyzingTitle: "Analysing your CV…",
@@ -174,6 +207,7 @@ function loadState() {
     const l = localStorage.getItem(LANG_KEY);
     if (l === "fr" || l === "en") lang = l;
     cvFileName = localStorage.getItem(CVNAME_KEY) || "";
+    howtoDismissed = localStorage.getItem(HOWTO_KEY) === "1";
   } catch (e) { profile = null; }
 }
 function saveProfileToStorage() {
@@ -430,6 +464,16 @@ function refreshCvUi() {
     document.getElementById("profilePanel").classList.add("hidden");
   }
   matchBtn.disabled = !(profile && lastOffers.length > 0);
+  renderHowto();
+}
+
+// La présentation s'efface d'elle-même dès qu'un CV est là : elle a fait son travail.
+function renderHowto() {
+  const box = document.getElementById("howto");
+  const open = document.getElementById("howtoOpen");
+  const visible = howtoForced || (!howtoDismissed && !profile);
+  box.classList.toggle("hidden", !visible);
+  open.classList.toggle("hidden", visible);
 }
 
 // ---- Recherche ----
@@ -934,6 +978,18 @@ document.getElementById("forgetBtn").addEventListener("click", () => {
   renderCvCard();
   refreshCvUi();
   document.getElementById("statusLine").textContent = t("forgotten");
+});
+
+document.getElementById("howtoClose").addEventListener("click", () => {
+  howtoForced = false;
+  howtoDismissed = true;
+  try { localStorage.setItem(HOWTO_KEY, "1"); } catch (e) {}
+  renderHowto();
+});
+document.getElementById("howtoOpen").addEventListener("click", () => {
+  howtoForced = true;
+  renderHowto();
+  document.getElementById("howto").scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
 
 document.getElementById("matchBtn").addEventListener("click", () => runMatch(false));

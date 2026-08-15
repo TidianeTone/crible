@@ -142,6 +142,63 @@ input:focus-visible { outline: 2px solid var(--brick); outline-offset: 2px; }
 .cv-label input { display: none; }
 .cv-hint { font-size: 12.5px; color: var(--slate); }
 
+/* ---- L'appli s'explique elle-même ---- */
+.howto {
+  margin: 18px 28px 0;
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--brick);
+  border-radius: 10px;
+}
+.howto.hidden { display: none; }
+.howto-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.howto-head h2 { margin: 0; font-size: 17px; }
+.howto-lead {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--slate);
+  max-width: 72ch;
+}
+.howto-steps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px 22px;
+}
+.howto-steps li { display: flex; gap: 12px; align-items: flex-start; }
+.howto-num {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--brick);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.howto-steps strong { display: block; font-size: 13.5px; }
+.howto-steps p { margin: 4px 0 0; font-size: 12.5px; color: var(--slate); }
+.howto-foot {
+  margin: 20px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--slate);
+  max-width: 72ch;
+}
+.howto-foot code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  background: var(--plaster-deep);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
 /* ---- Aperçu visuel du CV chargé ---- */
 .cv-card {
   display: flex;
@@ -554,6 +611,8 @@ input:focus-visible { outline: 2px solid var(--brick); outline-offset: 2px; }
   .status-line { margin-left: 0; width: 100%; margin-top: 6px; }
   .cv { padding: 14px 16px; }
   .cv-hint { width: 100%; }
+  .howto { margin: 14px 16px 0; padding: 16px; }
+  .howto-steps { grid-template-columns: 1fr; gap: 14px; }
   .cv-card { margin: 14px 16px 0; padding: 14px; gap: 14px; }
   .cv-sheet { flex-basis: 70px; height: 100px; }
   .progress { margin: 14px 16px 0; padding: 14px; }

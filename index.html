@@ -29,7 +29,66 @@
     </label>
     <button id="editProfileBtn" class="link-btn hidden" type="button" data-i18n="profileToggle">Voir / modifier mon profil</button>
     <button id="forgetBtn" class="link-btn hidden" type="button" data-i18n="forget">Oublier mon CV</button>
+    <button id="howtoOpen" class="link-btn hidden" type="button" data-i18n="howShow">Comment ça marche ?</button>
     <span id="cvHint" class="cv-hint" data-i18n="cvHintEmpty">Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.</span>
+  </section>
+
+  <!-- L'appli s'explique elle-même -->
+  <section id="howto" class="howto">
+    <div class="howto-head">
+      <h2 data-i18n="howTitle">À quoi sert JobTrack ?</h2>
+      <button id="howtoClose" class="link-btn" type="button" data-i18n="howHide">Masquer</button>
+    </div>
+    <p class="howto-lead" data-i18n="howLead">
+      JobTrack réunit les offres au même endroit et se sert de ton CV comme filtre :
+      tu ne lis que ce qui te concerne, et tu postules avec un CV taillé pour l'offre.
+    </p>
+
+    <ol class="howto-steps">
+      <li>
+        <span class="howto-num">1</span>
+        <div>
+          <strong data-i18n="how1t">Tu charges ton CV (PDF)</strong>
+          <p data-i18n="how1d">Il est lu une fois, pour en sortir un profil : titre, résumé,
+            compétences, expériences. Le PDF n'est stocké nulle part. Le profil reste dans ton
+            navigateur et tu peux le corriger à la main — c'est ta version qui compte.</p>
+        </div>
+      </li>
+      <li>
+        <span class="howto-num">2</span>
+        <div>
+          <strong data-i18n="how2t">Les offres viennent de 3 sources</strong>
+          <p data-i18n="how2d">France Travail, Adzuna (l'équivalent d'Indeed) et Meteojob,
+            interrogés en même temps pour ta ville et ton intitulé de poste.
+            Une seule liste au bout.</p>
+        </div>
+      </li>
+      <li>
+        <span class="howto-num">3</span>
+        <div>
+          <strong data-i18n="how3t">Chaque offre est notée pour toi</strong>
+          <p data-i18n="how3d">Un score en %, et une phrase qui dit pourquoi. Les meilleures
+            remontent en haut. Tu ne lis plus les 40 autres.</p>
+        </div>
+      </li>
+      <li>
+        <span class="howto-num">4</span>
+        <div>
+          <strong data-i18n="how4t">Tu repars avec une lettre et un CV adaptés</strong>
+          <p data-i18n="how4d">« Brouillon de lettre » te donne une base à personnaliser.
+            « Adapter mon CV » retravaille tes expériences pour cette offre précise, en trois
+            passes : ce qu'un recruteur voit en 10 secondes, une réécriture chiffrée, puis une
+            simulation de lecture au milieu de 200 CV et du filtre ATS.</p>
+        </div>
+      </li>
+    </ol>
+
+    <p class="howto-foot" data-i18n-html="howFoot">
+      <strong>Ce que l'appli ne fait pas :</strong> inventer un truc qui n'est pas dans ton CV.
+      Quand un chiffre lui manque, elle écrit <code>[à chiffrer]</code> et te laisse le remplir.
+      Elle ne postule pas à ta place, et elle ne va pas te rendre parfait à l'entretien —
+      là-dessus t'es tout seul.
+    </p>
   </section>
 
   <!-- Aperçu visuel du CV chargé -->
