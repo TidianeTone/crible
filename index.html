@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JobTrack</title>
+  <title>JobTrack — offres + IA</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,8 +12,12 @@
       <span class="brand-mark" aria-hidden="true"></span>
       <div class="brand-text">
         <h1>JobTrack</h1>
-        <p>3 sources réunies · classement et lettres de motivation par IA</p>
+        <p data-i18n="tagline">3 sources réunies · classement et lettres par IA</p>
       </div>
+    </div>
+    <div class="lang-switch" role="group" aria-label="Langue / Language">
+      <button id="langFr" class="lang-btn is-active" type="button" lang="fr">FR</button>
+      <button id="langEn" class="lang-btn" type="button" lang="en">EN</button>
     </div>
   </header>
 
@@ -21,30 +25,67 @@
   <section class="cv">
     <label class="cv-label">
       <input id="cvFile" type="file" accept="application/pdf" />
-      <span id="cvBtnText">📄 Charger mon CV (PDF)</span>
+      <span id="cvBtnText" data-i18n="cvLoad">📄 Charger mon CV (PDF)</span>
     </label>
-    <button id="editProfileBtn" class="link-btn hidden" type="button">Voir / modifier mon profil</button>
-    <button id="forgetBtn" class="link-btn hidden" type="button">Oublier mon CV</button>
-    <span id="cvHint" class="cv-hint">Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.</span>
+    <button id="editProfileBtn" class="link-btn hidden" type="button" data-i18n="profileToggle">Voir / modifier mon profil</button>
+    <button id="forgetBtn" class="link-btn hidden" type="button" data-i18n="forget">Oublier mon CV</button>
+    <span id="cvHint" class="cv-hint" data-i18n="cvHintEmpty">Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.</span>
+  </section>
+
+  <!-- Aperçu visuel du CV chargé -->
+  <section id="cvCard" class="cv-card hidden" aria-live="polite">
+    <div class="cv-sheet" aria-hidden="true">
+      <span class="cv-sheet-corner"></span>
+      <span class="cv-sheet-line w70"></span>
+      <span class="cv-sheet-line w40"></span>
+      <span class="cv-sheet-rule"></span>
+      <span class="cv-sheet-line w90"></span>
+      <span class="cv-sheet-line w80"></span>
+      <span class="cv-sheet-line w60"></span>
+      <span class="cv-sheet-rule"></span>
+      <span class="cv-sheet-line w85"></span>
+      <span class="cv-sheet-line w50"></span>
+    </div>
+    <div class="cv-card-body">
+      <div class="cv-card-head">
+        <strong id="cvCardTitle" class="cv-card-title"></strong>
+        <span id="cvCardFile" class="cv-card-file"></span>
+      </div>
+      <p id="cvCardSummary" class="cv-card-summary"></p>
+      <div id="cvCardSkills" class="cv-card-skills"></div>
+      <div id="cvCardXp" class="cv-card-xp"></div>
+      <p id="cvCardNoXp" class="cv-card-warn hidden" data-i18n="noXp">
+        Aucune expérience détaillée n'a été extraite : l'adaptation de CV ne sera pas disponible.
+      </p>
+    </div>
+  </section>
+
+  <!-- Progression : analyse du CV / classement des offres -->
+  <section id="progress" class="progress hidden" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    <div class="progress-body">
+      <strong id="progressTitle" class="progress-title"></strong>
+      <ul id="progressSteps" class="progress-steps"></ul>
+    </div>
   </section>
 
   <!-- Panneau profil éditable -->
   <section id="profilePanel" class="profile-panel hidden">
-    <p class="profile-intro">
-      Ce résumé sert au classement des offres et aux lettres de motivation.
+    <p class="profile-intro" data-i18n="profileIntro">
+      Ce résumé sert au classement des offres, aux lettres de motivation et à l'adaptation du CV.
       Corrige-le librement : c'est TA version qui fait foi, pas celle de l'IA.
     </p>
-    <label class="profile-field">Titre du profil
+    <label class="profile-field"><span data-i18n="fieldHeadline">Titre du profil</span>
       <input id="profHeadline" type="text" />
     </label>
-    <label class="profile-field">Résumé du parcours (~100 mots)
+    <label class="profile-field"><span data-i18n="fieldSummary">Résumé du parcours (~100 mots)</span>
       <textarea id="profSummary" rows="6"></textarea>
     </label>
-    <label class="profile-field">Compétences (séparées par des virgules)
+    <label class="profile-field"><span data-i18n="fieldSkills">Compétences (séparées par des virgules)</span>
       <input id="profSkills" type="text" />
     </label>
     <div class="profile-actions">
-      <button id="saveProfileBtn" class="solid-btn" type="button">Enregistrer mon profil</button>
+      <button id="saveProfileBtn" class="solid-btn" type="button" data-i18n="save">Enregistrer mon profil</button>
       <span id="profileStatus" class="save-status"></span>
     </div>
   </section>
@@ -52,18 +93,19 @@
   <!-- Étape 2 : recherche -->
   <section class="search">
     <input id="ville" type="text" class="ville-input" value="Toulouse"
-           placeholder="Ville" autocomplete="off" />
+           data-i18n-placeholder="city" placeholder="Ville" autocomplete="off" />
     <input id="keyword" type="text"
+           data-i18n-placeholder="keyword"
            placeholder="Intitulé du poste — ex. développeur, comptable…"
            autocomplete="off" />
-    <button id="searchBtn" class="solid-btn" type="button">Rechercher</button>
+    <button id="searchBtn" class="solid-btn" type="button" data-i18n="search">Rechercher</button>
   </section>
 
   <section class="filters">
     <label class="chk"><input type="checkbox" id="srcFT" checked /> France Travail</label>
-    <label class="chk"><input type="checkbox" id="srcADZ" checked /> Adzuna + Indeed</label>
+    <label class="chk"><input type="checkbox" id="srcADZ" checked /> Adzuna</label>
     <label class="chk"><input type="checkbox" id="srcMJ" checked /> Meteojob</label>
-    <button id="matchBtn" class="match-btn" type="button" disabled>
+    <button id="matchBtn" class="match-btn" type="button" disabled data-i18n="rank">
       ✨ Classer selon mon CV
     </button>
     <span id="statusLine" class="status-line"></span>
@@ -72,37 +114,105 @@
   <main id="results" class="results"></main>
 
   <div id="emptyState" class="empty">
-    <p>Charge ton CV ou lance une recherche pour voir les offres.</p>
+    <p data-i18n="emptyStart">Charge ton CV ou lance une recherche pour voir les offres.</p>
   </div>
 
   <!-- Modale lettre de motivation -->
   <div id="letterModal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head">
-        <strong id="letterTitle">Brouillon de lettre</strong>
-        <button id="letterClose" class="link-btn" type="button">Fermer</button>
+        <strong id="letterTitle" data-i18n="letterTitle">Brouillon de lettre</strong>
+        <button id="letterClose" class="link-btn" type="button" data-i18n="close">Fermer</button>
       </div>
-      <p class="modal-hint">
+      <p class="modal-hint" data-i18n="letterHint">
         C'est un brouillon : personnalise-le avant de l'envoyer (une lettre IA brute, ça se repère).
       </p>
       <textarea id="letterText" rows="14"></textarea>
       <div class="modal-actions">
-        <button id="letterCopy" class="solid-btn" type="button">Copier</button>
+        <button id="letterCopy" class="solid-btn" type="button" data-i18n="copy">Copier</button>
         <span id="letterStatus" class="save-status"></span>
       </div>
     </div>
   </div>
 
-  <div class="privacy-note">
-    🔒 <strong>Confidentialité</strong> — Ton CV n'est jamais stocké sur nos serveurs : il est transmis
-    une seule fois à l'API Claude (Anthropic) pour en extraire un résumé, puis oublié côté serveur.
-    Ce résumé est conservé uniquement dans TON navigateur (localStorage) et effaçable via
-    « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses propres cookies techniques.
-    Aucune donnée n'est revendue ni partagée au-delà de ces traitements.
+  <!-- Modale adaptation du CV -->
+  <div id="tailorModal" class="modal hidden">
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <strong id="tailorTitle" data-i18n="tailorTitle">Adapter mon CV à cette offre</strong>
+        <button id="tailorClose" class="link-btn" type="button" data-i18n="close">Fermer</button>
+      </div>
+
+      <!-- Fil de progression des 3 étapes -->
+      <ol id="tailorSteps" class="tailor-steps">
+        <li data-step="1"><span class="dot"></span><span class="lbl" data-i18n="tailorStep1">Regard du recruteur</span></li>
+        <li data-step="2"><span class="dot"></span><span class="lbl" data-i18n="tailorStep2">Réécriture XYZ</span></li>
+        <li data-step="3"><span class="dot"></span><span class="lbl" data-i18n="tailorStep3">Filtre ATS</span></li>
+      </ol>
+
+      <p id="tailorError" class="tailor-error hidden"></p>
+
+      <!-- Étape 1 -->
+      <section id="tailorAudit" class="tailor-block hidden">
+        <h3 data-i18n="auditTitle">Ce qu'un recruteur voit en 10 secondes</h3>
+        <div class="tailor-cols">
+          <div>
+            <h4 data-i18n="missingTitle">5 mots-clés manquants</h4>
+            <ul id="tailorKeywords" class="tailor-list"></ul>
+          </div>
+          <div>
+            <h4 data-i18n="flagsTitle">3 signaux d'alerte</h4>
+            <ul id="tailorFlags" class="tailor-list flags"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Étape 2 : le comparatif -->
+      <section id="tailorCompare" class="tailor-block hidden">
+        <h3 data-i18n="compareTitle">Comparatif : ton CV / le CV adapté</h3>
+        <p class="tailor-note" data-i18n="compareNote">
+          Rien n'a été inventé. Les mentions [à chiffrer] sont des trous à remplir toi-même
+          avec de vrais chiffres — c'est là que se gagne un entretien.
+        </p>
+        <div id="tailorDiff" class="tailor-diff"></div>
+        <div class="tailor-changes">
+          <h4 data-i18n="changesTitle">Ce qui a changé</h4>
+          <ul id="tailorChanges" class="tailor-list"></ul>
+        </div>
+      </section>
+
+      <!-- Étape 3 -->
+      <section id="tailorAts" class="tailor-block hidden">
+        <h3 data-i18n="atsTitle">Passage au crible : ATS + 200 CV d'affilée</h3>
+        <div class="ats-head">
+          <span id="atsScore" class="ats-score"></span>
+          <span id="atsVerdict" class="ats-verdict"></span>
+        </div>
+        <h4 data-i18n="ignoredTitle">Ce qui serait ignoré</h4>
+        <ul id="atsIgnored" class="tailor-list"></ul>
+        <h4 data-i18n="rewritesTitle">Réécritures qui accrochent</h4>
+        <div id="atsRewrites" class="tailor-diff"></div>
+      </section>
+
+      <div class="modal-actions">
+        <button id="tailorCopy" class="solid-btn" type="button" disabled data-i18n="copyCv">Copier le CV adapté</button>
+        <button id="tailorRetry" class="link-btn hidden" type="button" data-i18n="retry">Relancer</button>
+        <span id="tailorStatus" class="save-status"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="privacy-note" data-i18n-html="privacy">
+    🔒 <strong>Confidentialité</strong> — Ton CV n'est jamais stocké sur nos serveurs : le PDF est transmis
+    une seule fois à l'API Claude (Anthropic) pour en extraire un profil et tes expériences, puis oublié
+    côté serveur. Le PDF lui-même n'est conservé nulle part. Le profil extrait reste uniquement dans TON
+    navigateur (localStorage) et s'efface via « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses
+    propres cookies techniques. Aucune donnée n'est revendue ni partagée au-delà de ces traitements.
   </div>
 
   <footer class="site-footer">
-    Développé par <a href="https://www.instagram.com/tidianetone/" target="_blank" rel="noopener noreferrer">Tidiane Sow</a>
+    <span data-i18n="madeBy">Développé par</span>
+    <a href="https://www.instagram.com/tidianetone/" target="_blank" rel="noopener noreferrer">Tidiane Sow</a>
   </footer>
 
   <script src="app.js"></script>

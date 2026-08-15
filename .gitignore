@@ -1,0 +1,16 @@
+# Dépendances
+node_modules/
+
+# Secrets — les clés vivent dans les variables d'environnement Vercel, jamais ici
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Divers
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
