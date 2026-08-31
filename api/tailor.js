@@ -21,7 +21,19 @@ const NO_INVENT =
   " RÈGLE ABSOLUE : n'invente aucune expérience, aucun employeur, aucun chiffre. " +
   "Tu peux reformuler, hiérarchiser et rendre explicite ce qui est implicite, " +
   "jamais ajouter un fait absent du CV. Si un résultat chiffré manque, écris " +
-  "un marqueur [à chiffrer] plutôt qu'un nombre inventé.";
+  "un marqueur [à chiffrer] plutôt qu'un nombre inventé. " +
+  // La frontière utile n'est pas « générique vs précis » mais « vérifiable en
+  // entretien vs pas ». Décrire une mission inhérente au métier ne trahit rien ;
+  // nommer un outil que le CV ne cite pas se retourne contre le candidat dès la
+  // première question technique.
+  "DISTINCTION IMPORTANTE : tu PEUX décrire une mission inhérente au métier même " +
+  "si le CV ne la détaille pas (un réceptionniste gère des réservations, c'est " +
+  "constitutif du poste). Tu ne PEUX PAS nommer un outil, un logiciel, un système, " +
+  "une certification, un employeur ou une formation qui ne figure pas dans le CV : " +
+  "écris la fonction (« le logiciel de réservation de l'hôtel »), jamais un produit " +
+  "précis (« Opera », « le PMS ») que le candidat n'a pas revendiqué. " +
+  "Tu ne PEUX PAS non plus élargir une disponibilité ou une période que le CV borne " +
+  "(un parcours de nuit ne devient pas « jour et nuit »).";
 
 function offerText(offer) {
   return (
@@ -36,7 +48,7 @@ function experiencesText(experiences) {
   if (!Array.isArray(experiences) || experiences.length === 0) return "(aucune expérience détaillée)";
   return experiences
     .map((x, i) => {
-      const head = [x.role, x.company, x.period].filter(Boolean).join(" — ");
+      const head = [x.role, x.company, x.period].filter(Boolean).join(" · ");
       const lines = (x.bullets || []).map((b) => "  - " + b).join("\n");
       return `${i + 1}. ${head}\n${lines}`;
     })
@@ -85,7 +97,7 @@ function step2(profile, offer, audit, lang) {
     output_config: { effort: "medium" },
     system:
       "Tu réécris la section EXPÉRIENCES d'un CV pour la rendre imbattable sur une offre précise. " +
-      "Applique la formule XYZ de Google à CHAQUE puce : « Accompli X, mesuré par Y, en faisant Z » — " +
+      "Applique la formule XYZ de Google à CHAQUE puce : « Accompli X, mesuré par Y, en faisant Z » : " +
       "un résultat, une mesure, un moyen ; commence par un verbe d'action, jamais par « Responsable de ». " +
       "Intègre NATURELLEMENT les mots-clés manquants fournis (pas de bourrage : un mot-clé placé " +
       "dans une phrase qui a du sens) et fais disparaître chacun des signaux d'alerte fournis. " +
@@ -128,10 +140,20 @@ function step3(experiences, offer, lang) {
       "rewrites = 2 à 4 réécritures, before = le passage faible tel quel, " +
       "after = la version qui accroche vraiment l'attention." +
       NO_INVENT +
+      // Placé en dernier, et formulé comme une vérification à faire plutôt
+      // qu'un principe : noyé au milieu du prompt, le modèle continuait de
+      // prêter au candidat les horaires demandés par l'offre plutôt que ceux
+      // que son CV montre. Le verdict est lu comme un miroir du CV — s'il
+      // flatte, le candidat arrive en entretien sûr d'un atout inexistant.
+      " AVANT DE RÉPONDRE, RELIS TON VERDICT : chaque fait qu'il attribue au " +
+      "candidat doit être présent noir sur blanc dans les expériences fournies. " +
+      "Un parcours qui ne montre que des nuits se décrit « en nuit », jamais " +
+      "« nuit et jour », même si l'offre demande les deux. Ce que le candidat " +
+      "n'a pas, dis-le comme un manque, pas comme un acquis." +
       langInstruction(lang),
     messages: [{
       role: "user",
-      content: "NOUVEAU CV — EXPÉRIENCES :\n" + experiencesText(experiences) + "\n\n---\n\n" + offerText(offer),
+      content: "NOUVEAU CV, EXPÉRIENCES :\n" + experiencesText(experiences) + "\n\n---\n\n" + offerText(offer),
     }],
   };
 }
@@ -197,7 +219,7 @@ export default async function handler(req, res) {
 
   const parsed = parseJsonLoose(text, "object");
   if (!parsed) {
-    res.status(502).json({ error: "Réponse illisible à l'étape " + step + " — réessaie." });
+    res.status(502).json({ error: "Réponse illisible à l'étape " + step + ", réessaie." });
     return;
   }
 
@@ -213,7 +235,7 @@ export default async function handler(req, res) {
   if (step === 2) {
     const experiences = normExperiences(parsed.experiences);
     if (experiences.length === 0) {
-      res.status(502).json({ error: "La réécriture n'a rien renvoyé — réessaie." });
+      res.status(502).json({ error: "La réécriture n'a rien renvoyé, réessaie." });
       return;
     }
     res.status(200).json({

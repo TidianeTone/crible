@@ -59,7 +59,7 @@ export default async function handler(req, res) {
   } catch (e) { sendError(res, e); return; }
 
   if (!letter) {
-    res.status(200).json({ letter: "", warning: "La rédaction n'a rien renvoyé cette fois-ci — réessaie." });
+    res.status(200).json({ letter: "", warning: "La rédaction n'a rien renvoyé cette fois-ci, réessaie." });
     return;
   }
   res.status(200).json({ letter });

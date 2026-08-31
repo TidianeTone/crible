@@ -3,59 +3,141 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JobTrack</title>
+  <title>CRIBLE, le CV comme filtre</title>
+  <meta name="description" content="CRIBLE réunit les offres de trois sources et se sert de ton CV comme filtre : tu ne lis que ce qui te concerne." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="canonical" href="https://cvcrible.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://cvcrible.vercel.app/" />
+  <meta property="og:title" content="CRIBLE, le CV comme filtre" />
+  <meta property="og:description" content="Trois sources d'offres d'emploi, ton CV en guise de filtre : tu ne lis que ce qui te concerne." />
+  <meta property="og:image" content="https://cvcrible.vercel.app/empreinte-512.png" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/empreinte-32.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/empreinte-512.png" />
+  <link rel="apple-touch-icon" href="/empreinte-180.png" />
+  <script>
+    // Posé avant la feuille de style : le thème doit être décidé avant le
+    // premier pixel, sinon le fond graphite clignote chez un visiteur en jour.
+    // Choix enregistré > préférence du système > nuit (l'identité du produit).
+    (function () {
+      var c;
+      try { c = localStorage.getItem("cribleTheme"); } catch (e) {}
+      if (c !== "jour" && c !== "nuit") {
+        c = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "jour" : "nuit";
+      }
+      document.documentElement.dataset.theme = c;
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar">
+<!--
+THESIS: le CV est l'échantillon, chaque offre une mesure lue contre un seuil. Refuse la grille de cartes du job-tracker SaaS : ici tout s'aligne sur un axe unique, gradué une seule fois.
+OWN-WORLD: fond graphite #0D0F12, panneaux #14171C, filets 1px, texte ivoire, chiffres monospacés tabulaires. Une seule rampe de couleur (orange #FF8A4C, magenta #E8299B, violet #7B3FE4), réservée à la graduation de l'axe de mesure. Aucune teinte intermédiaire arbitraire.
+STORY: le visiteur dépose son CV, voit 40 offres devenir 40 mesures, lit les trois qui passent le seuil haut, repart avec une lettre et un CV retaillés.
+FIRST VIEWPORT: bandeau de marque, bloc échantillon (le CV), bloc paramètres, puis l'axe gradué 0–40–70–100 tracé une fois, et sous lui les mesures alignées dessus. L'action primaire « Classer selon mon CV » est le seul élément à pleine intensité.
+FORM: le rapport d'analyse, candidat 2 de la liste, registre familier demandé par l'utilisateur ; seed 4b8cfdd8.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+-->
+
+  <header class="masthead">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="mark" src="/empreinte-512.png" alt="" width="34" height="34" decoding="async" />
       <div class="brand-text">
-        <h1>JobTrack</h1>
+        <h1>CRIBLE</h1>
         <p data-i18n="tagline">3 sources réunies · classement et lettres par IA</p>
       </div>
     </div>
-    <div class="lang-switch" role="group" aria-label="Langue / Language">
-      <button id="langFr" class="lang-btn is-active" type="button" lang="fr">FR</button>
-      <button id="langEn" class="lang-btn" type="button" lang="en">EN</button>
+    <div class="head-controls">
+      <div class="theme-switch" role="group" data-i18n-aria="themeGroup" aria-label="Thème clair ou sombre">
+        <button id="themeJour" class="theme-btn" type="button" aria-pressed="false" data-i18n-aria="themeDay" aria-label="Jour">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.6 12h2.2M19.2 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+        </button>
+        <button id="themeNuit" class="theme-btn" type="button" aria-pressed="true" data-i18n-aria="themeNight" aria-label="Nuit">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/></svg>
+        </button>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Langue / Language">
+        <button id="langFr" class="lang-btn is-active" type="button" lang="fr">FR</button>
+        <button id="langEn" class="lang-btn" type="button" lang="en">EN</button>
+      </div>
     </div>
   </header>
 
-  <!-- Étape 1 : le CV d'abord -->
-  <section class="cv">
-    <label class="cv-label">
-      <input id="cvFile" type="file" accept="application/pdf" />
-      <span id="cvBtnText" data-i18n="cvLoad">📄 Charger mon CV (PDF)</span>
-    </label>
-    <button id="editProfileBtn" class="link-btn hidden" type="button" data-i18n="profileToggle">Voir / modifier mon profil</button>
-    <button id="forgetBtn" class="link-btn hidden" type="button" data-i18n="forget">Oublier mon CV</button>
-    <button id="howtoOpen" class="link-btn hidden" type="button" data-i18n="howShow">Comment ça marche ?</button>
-    <span id="cvHint" class="cv-hint" data-i18n="cvHintEmpty">Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.</span>
+  <!-- Le banc de mesure : échantillon, paramètres, sources -->
+  <section class="rig" id="rig">
+    <div class="rig-block rig-sample">
+      <h2 class="rig-label" data-i18n="rigSample">Échantillon</h2>
+      <div class="rig-body">
+        <label class="cv-label">
+          <input id="cvFile" type="file" accept="application/pdf" />
+          <span id="cvBtnText" data-i18n="cvLoad">Charger mon CV (PDF)</span>
+        </label>
+        <div class="rig-links">
+          <button id="forgetBtn" class="link-btn hidden" type="button" data-i18n="forget">Oublier mon CV</button>
+          <button id="howtoOpen" class="link-btn hidden" type="button" data-i18n="howShow">Comment ça marche ?</button>
+        </div>
+        <p id="cvHint" class="cv-hint" data-i18n="cvHintEmpty">Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.</p>
+      </div>
+    </div>
+
+    <div class="rig-block rig-params">
+      <h2 class="rig-label" data-i18n="rigParams">Paramètres</h2>
+      <div class="rig-body">
+        <div class="field">
+          <label for="ville" data-i18n="fieldCity">Ville</label>
+          <input id="ville" type="text" value="Toulouse"
+                 data-i18n-placeholder="city" placeholder="Ville" autocomplete="off" />
+        </div>
+        <div class="field field-wide">
+          <label for="keyword" data-i18n="fieldKeyword">Intitulé du poste</label>
+          <input id="keyword" type="text"
+                 data-i18n-placeholder="keyword"
+                 placeholder="Intitulé du poste (ex. développeur, comptable)"
+                 autocomplete="off" />
+          <p id="rephraseHint" class="field-hint hidden" role="status" data-i18n="rephrase">Essaye de reformuler !</p>
+        </div>
+        <button id="searchBtn" class="solid-btn" type="button" data-i18n="search">Rechercher</button>
+      </div>
+    </div>
+
+    <div class="rig-block rig-sources">
+      <h2 class="rig-label" data-i18n="rigSources">Sources interrogées</h2>
+      <div class="rig-body">
+        <label class="chk chk-ft"><input type="checkbox" id="srcFT" checked /> <span>France Travail</span></label>
+        <label class="chk chk-adz"><input type="checkbox" id="srcADZ" checked /> <span>Adzuna</span></label>
+        <label class="chk chk-mj"><input type="checkbox" id="srcMJ" checked /> <span>Meteojob</span></label>
+        <button id="matchBtn" class="primary-btn" type="button" disabled data-i18n="rank">
+          Classer selon mon CV
+        </button>
+      </div>
+      <p id="statusLine" class="status-line" aria-live="polite"></p>
+    </div>
   </section>
 
-  <!-- L'appli s'explique elle-même -->
+  <!-- Ce que l'appli fait, dit par elle-même -->
   <section id="howto" class="howto">
     <div class="howto-head">
-      <h2 data-i18n="howTitle">À quoi sert JobTrack ?</h2>
+      <h2 data-i18n="howTitle">À quoi sert CRIBLE ?</h2>
       <button id="howtoClose" class="link-btn" type="button" data-i18n="howHide">Masquer</button>
     </div>
     <p class="howto-lead" data-i18n="howLead">
-      JobTrack réunit les offres au même endroit et se sert de ton CV comme filtre :
+      CRIBLE réunit les offres au même endroit et se sert de ton CV comme filtre :
       tu ne lis que ce qui te concerne, et tu postules avec un CV taillé pour l'offre.
     </p>
 
     <ol class="howto-steps">
       <li>
-        <span class="howto-num">1</span>
         <div>
           <strong data-i18n="how1t">Tu charges ton CV (PDF)</strong>
           <p data-i18n="how1d">Il est lu une fois, pour en sortir un profil : titre, résumé,
             compétences, expériences. Le PDF n'est stocké nulle part. Le profil reste dans ton
-            navigateur et tu peux le corriger à la main — c'est ta version qui compte.</p>
+            navigateur et tu peux le corriger à la main. C'est ta version qui compte.</p>
         </div>
       </li>
       <li>
-        <span class="howto-num">2</span>
         <div>
           <strong data-i18n="how2t">Les offres viennent de 3 sources</strong>
           <p data-i18n="how2d">France Travail, Adzuna (l'équivalent d'Indeed) et Meteojob,
@@ -64,7 +146,6 @@
         </div>
       </li>
       <li>
-        <span class="howto-num">3</span>
         <div>
           <strong data-i18n="how3t">Chaque offre est notée pour toi</strong>
           <p data-i18n="how3d">Un score en %, et une phrase qui dit pourquoi. Les meilleures
@@ -72,7 +153,6 @@
         </div>
       </li>
       <li>
-        <span class="howto-num">4</span>
         <div>
           <strong data-i18n="how4t">Tu repars avec une lettre et un CV adaptés</strong>
           <p data-i18n="how4d">« Brouillon de lettre » te donne une base à personnaliser.
@@ -86,13 +166,22 @@
     <p class="howto-foot" data-i18n-html="howFoot">
       <strong>Ce que l'appli ne fait pas :</strong> inventer un truc qui n'est pas dans ton CV.
       Quand un chiffre lui manque, elle écrit <code>[à chiffrer]</code> et te laisse le remplir.
-      Elle ne postule pas à ta place, et elle ne va pas te rendre parfait à l'entretien —
-      là-dessus t'es tout seul.
+      Elle ne postule pas à ta place, et elle ne va pas te rendre parfait à l'entretien.
+      Là-dessus t'es tout seul.
     </p>
   </section>
 
-  <!-- Aperçu visuel du CV chargé -->
-  <section id="cvCard" class="cv-card hidden" aria-live="polite">
+  <!-- Fiche de l'échantillon : le CV lu.
+       Repliée par défaut, en <details> natif : dépliée, elle coûtait ~400 px
+       sur mobile et repoussait l'axe gradué sous la ligne de flottaison,
+       alors que le banc dit déjà l'essentiel. Repliable sans une ligne de JS. -->
+  <details id="cvCard" class="cv-card hidden" open aria-live="polite">
+    <summary class="cv-card-head">
+      <strong id="cvCardTitle" class="cv-card-title"></strong>
+      <span id="cvCardFile" class="cv-card-file"></span>
+    </summary>
+    <div class="cv-card-inner">
+    <div class="cv-sheet-col">
     <div class="cv-sheet" aria-hidden="true">
       <span class="cv-sheet-corner"></span>
       <span class="cv-sheet-line w70"></span>
@@ -105,11 +194,9 @@
       <span class="cv-sheet-line w85"></span>
       <span class="cv-sheet-line w50"></span>
     </div>
+    <button id="editProfileBtn" class="edit-btn hidden" type="button" data-i18n="profileToggle">Éditer le profil</button>
+    </div>
     <div class="cv-card-body">
-      <div class="cv-card-head">
-        <strong id="cvCardTitle" class="cv-card-title"></strong>
-        <span id="cvCardFile" class="cv-card-file"></span>
-      </div>
       <p id="cvCardSummary" class="cv-card-summary"></p>
       <div id="cvCardSkills" class="cv-card-skills"></div>
       <div id="cvCardXp" class="cv-card-xp"></div>
@@ -117,9 +204,10 @@
         Aucune expérience détaillée n'a été extraite : l'adaptation de CV ne sera pas disponible.
       </p>
     </div>
-  </section>
+    </div>
+  </details>
 
-  <!-- Progression : analyse du CV / classement des offres -->
+  <!-- Analyse en cours -->
   <section id="progress" class="progress hidden" role="status" aria-live="polite">
     <span class="spinner" aria-hidden="true"></span>
     <div class="progress-body">
@@ -128,7 +216,7 @@
     </div>
   </section>
 
-  <!-- Panneau profil éditable -->
+  <!-- Profil éditable : c'est la version de l'utilisateur qui fait foi -->
   <section id="profilePanel" class="profile-panel hidden">
     <p class="profile-intro" data-i18n="profileIntro">
       Ce résumé sert au classement des offres, aux lettres de motivation et à l'adaptation du CV.
@@ -145,30 +233,20 @@
     </label>
     <div class="profile-actions">
       <button id="saveProfileBtn" class="solid-btn" type="button" data-i18n="save">Enregistrer mon profil</button>
-      <span id="profileStatus" class="save-status"></span>
+      <span id="profileStatus" class="save-status" aria-live="polite"></span>
     </div>
   </section>
 
-  <!-- Étape 2 : recherche -->
-  <section class="search">
-    <input id="ville" type="text" class="ville-input" value="Toulouse"
-           data-i18n-placeholder="city" placeholder="Ville" autocomplete="off" />
-    <input id="keyword" type="text"
-           data-i18n-placeholder="keyword"
-           placeholder="Intitulé du poste — ex. développeur, comptable…"
-           autocomplete="off" />
-    <button id="searchBtn" class="solid-btn" type="button" data-i18n="search">Rechercher</button>
-  </section>
-
-  <section class="filters">
-    <label class="chk"><input type="checkbox" id="srcFT" checked /> France Travail</label>
-    <label class="chk"><input type="checkbox" id="srcADZ" checked /> Adzuna</label>
-    <label class="chk"><input type="checkbox" id="srcMJ" checked /> Meteojob</label>
-    <button id="matchBtn" class="match-btn" type="button" disabled data-i18n="rank">
-      ✨ Classer selon mon CV
-    </button>
-    <span id="statusLine" class="status-line"></span>
-  </section>
+  <!-- L'axe de mesure, gradué une seule fois pour toutes les lignes -->
+  <div class="axis" aria-hidden="true">
+    <div class="axis-ramp"></div>
+    <div class="axis-ticks">
+      <span class="axis-tick" style="--at:0">0</span>
+      <span class="axis-tick is-threshold" style="--at:40">40 <em data-i18n="threshold">seuil</em></span>
+      <span class="axis-tick is-threshold" style="--at:70">70 <em data-i18n="threshold">seuil</em></span>
+      <span class="axis-tick" style="--at:100">100</span>
+    </div>
+  </div>
 
   <main id="results" class="results"></main>
 
@@ -176,9 +254,9 @@
     <p data-i18n="emptyStart">Charge ton CV ou lance une recherche pour voir les offres.</p>
   </div>
 
-  <!-- Modale lettre de motivation -->
+  <!-- Brouillon de lettre -->
   <div id="letterModal" class="modal hidden">
-    <div class="modal-box">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="letterTitle">
       <div class="modal-head">
         <strong id="letterTitle" data-i18n="letterTitle">Brouillon de lettre</strong>
         <button id="letterClose" class="link-btn" type="button" data-i18n="close">Fermer</button>
@@ -189,29 +267,27 @@
       <textarea id="letterText" rows="14"></textarea>
       <div class="modal-actions">
         <button id="letterCopy" class="solid-btn" type="button" data-i18n="copy">Copier</button>
-        <span id="letterStatus" class="save-status"></span>
+        <span id="letterStatus" class="save-status" aria-live="polite"></span>
       </div>
     </div>
   </div>
 
-  <!-- Modale adaptation du CV -->
+  <!-- Adaptation du CV à une offre -->
   <div id="tailorModal" class="modal hidden">
-    <div class="modal-box modal-wide">
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-labelledby="tailorTitle">
       <div class="modal-head">
         <strong id="tailorTitle" data-i18n="tailorTitle">Adapter mon CV à cette offre</strong>
         <button id="tailorClose" class="link-btn" type="button" data-i18n="close">Fermer</button>
       </div>
 
-      <!-- Fil de progression des 3 étapes -->
       <ol id="tailorSteps" class="tailor-steps">
         <li data-step="1"><span class="dot"></span><span class="lbl" data-i18n="tailorStep1">Regard du recruteur</span></li>
         <li data-step="2"><span class="dot"></span><span class="lbl" data-i18n="tailorStep2">Réécriture XYZ</span></li>
         <li data-step="3"><span class="dot"></span><span class="lbl" data-i18n="tailorStep3">Filtre ATS</span></li>
       </ol>
 
-      <p id="tailorError" class="tailor-error hidden"></p>
+      <p id="tailorError" class="tailor-error hidden" role="alert"></p>
 
-      <!-- Étape 1 -->
       <section id="tailorAudit" class="tailor-block hidden">
         <h3 data-i18n="auditTitle">Ce qu'un recruteur voit en 10 secondes</h3>
         <div class="tailor-cols">
@@ -226,12 +302,11 @@
         </div>
       </section>
 
-      <!-- Étape 2 : le comparatif -->
       <section id="tailorCompare" class="tailor-block hidden">
         <h3 data-i18n="compareTitle">Comparatif : ton CV / le CV adapté</h3>
         <p class="tailor-note" data-i18n="compareNote">
           Rien n'a été inventé. Les mentions [à chiffrer] sont des trous à remplir toi-même
-          avec de vrais chiffres — c'est là que se gagne un entretien.
+          avec de vrais chiffres. C'est là que se gagne un entretien.
         </p>
         <div id="tailorDiff" class="tailor-diff"></div>
         <div class="tailor-changes">
@@ -240,7 +315,6 @@
         </div>
       </section>
 
-      <!-- Étape 3 -->
       <section id="tailorAts" class="tailor-block hidden">
         <h3 data-i18n="atsTitle">Passage au crible : ATS + 200 CV d'affilée</h3>
         <div class="ats-head">
@@ -256,13 +330,13 @@
       <div class="modal-actions">
         <button id="tailorCopy" class="solid-btn" type="button" disabled data-i18n="copyCv">Copier le CV adapté</button>
         <button id="tailorRetry" class="link-btn hidden" type="button" data-i18n="retry">Relancer</button>
-        <span id="tailorStatus" class="save-status"></span>
+        <span id="tailorStatus" class="save-status" aria-live="polite"></span>
       </div>
     </div>
   </div>
 
   <div class="privacy-note" data-i18n-html="privacy">
-    🔒 <strong>Confidentialité</strong> — Ton CV n'est jamais stocké sur nos serveurs : le PDF est transmis
+    <strong>Confidentialité</strong> : ton CV n'est jamais stocké sur nos serveurs : le PDF est transmis
     une seule fois à l'API Claude (Anthropic) pour en extraire un profil et tes expériences, puis oublié
     côté serveur. Le PDF lui-même n'est conservé nulle part. Le profil extrait reste uniquement dans TON
     navigateur (localStorage) et s'efface via « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses
@@ -270,7 +344,7 @@
   </div>
 
   <footer class="site-footer">
-    <span data-i18n="madeBy">Développé par</span>
+    <span data-i18n="madeBy">par</span>
     <a href="https://www.instagram.com/tidianetone/" target="_blank" rel="noopener noreferrer">Tidiane Sow</a>
   </footer>
 

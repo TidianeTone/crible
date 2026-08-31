@@ -5,13 +5,17 @@
 
 import {
   readBody, callClaude, parseJsonLoose, sendError, requireKey,
-  normLang, langInstruction, MODEL_FAST,
+  normLang, langInstruction,
 } from "./_claude.js";
 
 // La lecture d'un PDF de plusieurs pages dépasse souvent les 10 s par défaut.
 export const config = { maxDuration: 60 };
 
-const MAX_TOKENS = 3000;
+// 3000 -> 4500 : la lecture était le maillon serré. Un CV de deux pages bien
+// rempli saturait le budget, et le modèle rognait sur les puces des postes les
+// plus anciens — or c'est exactement cette matière qui manque ensuite à
+// /api/tailor, qui comble alors les trous de lui-même.
+const MAX_TOKENS = 4500;
 
 function systemPrompt(lang) {
   return (
@@ -25,15 +29,19 @@ function systemPrompt(lang) {
     "expériences marquantes avec durées, secteurs, responsabilités concrètes, formations, " +
     "particularités du parcours (reconversions, trous, projets perso notables), " +
     "à la troisième personne, factuel, sans flatterie ; " +
-    "skills = 5 à 10 compétences clés ; " +
+    "skills = 8 à 14 compétences clés, en NOMMANT les logiciels, outils et " +
+    "systèmes métier cités dans le CV (ex: un PMS hôtelier comme Opera ou Mews, " +
+    "un ERP, une suite bureautique, un logiciel de caisse), ainsi que les langues " +
+    "et leur niveau, et les certifications ou diplômes marquants ; " +
     "keywords = 1 à 3 intitulés de poste à chercher pour ce profil, " +
     (normLang(lang) === "en"
       ? "in ENGLISH ; "
       : "en FRANÇAIS même si le CV est en anglais (ex: un CV 'Product Manager' anglophone -> [\"product manager\", \"chef de produit\"]) ; ") +
     "experiences = les postes du CV, du plus récent au plus ancien, 6 maximum, " +
     "chacun avec role (intitulé), company (employeur), period (ex: \"2021 – 2024\") " +
-    "et bullets = 2 à 5 phrases reprenant FIDÈLEMENT les missions et résultats " +
-    "tels qu'ils figurent dans le CV. " +
+    "et bullets = 3 à 6 phrases reprenant FIDÈLEMENT les missions et résultats " +
+    "tels qu'ils figurent dans le CV, en conservant les chiffres, volumes, " +
+    "outils et intitulés exacts du document plutôt qu'en les résumant. " +
     "N'INVENTE RIEN : si une information est absente du CV, mets une chaîne vide. " +
     "Si le CV ne contient aucune expérience professionnelle, renvoie experiences: []." +
     langInstruction(lang)
@@ -42,7 +50,9 @@ function systemPrompt(lang) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "Méthode non autorisée" }); return; }
-  const apiKey = requireKey(res);
+  // PDF envoyé en bloc "document" Anthropic — DeepSeek ne sait pas le lire
+  // dans ce format, cette route reste donc forcée sur Claude.
+  const apiKey = requireKey(res, { forceAnthropic: true });
   if (!apiKey) return;
 
   let body;
@@ -55,7 +65,7 @@ export default async function handler(req, res) {
   let text;
   try {
     text = await callClaude(apiKey, {
-      model: MODEL_FAST,
+      model: "claude-haiku-4-5-20251001",
       max_tokens: MAX_TOKENS,
       system: systemPrompt(lang),
       messages: [{
@@ -66,7 +76,7 @@ export default async function handler(req, res) {
           { type: "text", text: "Analyse ce CV." },
         ],
       }],
-    });
+    }, { forceAnthropic: true });
   } catch (e) { sendError(res, e); return; }
 
   const parsed = parseJsonLoose(text, "object");
@@ -98,6 +108,6 @@ export default async function handler(req, res) {
       keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
       experiences,
     },
-    model: MODEL_FAST,
+    model: "claude-haiku-4-5-20251001",
   });
 }

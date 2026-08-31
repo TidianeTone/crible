@@ -11,55 +11,87 @@ const tailorCache = new Map(); // clé = url de l'offre -> résultat des 3 étap
 let howtoForced = false;   // l'utilisateur a rouvert « Comment ça marche ? »
 let howtoDismissed = false; // il l'a masqué une fois : on ne le réimpose plus
 
-const PROFILE_KEY = "jobtrackProfile";
-const HOWTO_KEY = "jobtrackHowtoHidden";
-const LANG_KEY = "jobtrackLang";
-const CVNAME_KEY = "jobtrackCvName";
+const PROFILE_KEY = "cribleProfile";
+const HOWTO_KEY = "cribleHowtoHidden";
+const LANG_KEY = "cribleLang";
+const CVNAME_KEY = "cribleCvName";
+
+// Renommage JobTrack -> Crible : sans ce report, un visiteur déjà venu
+// retrouverait l'app vide (profil et CV perdus) au premier chargement après
+// le déploiement. Se supprime tout seul une fois la reprise faite.
+(function migrerAnciennesCles() {
+  const paires = [
+    ["jobtrackProfile", PROFILE_KEY],
+    ["jobtrackHowtoHidden", HOWTO_KEY],
+    ["jobtrackLang", LANG_KEY],
+    ["jobtrackCvName", CVNAME_KEY],
+  ];
+  try {
+    for (const [avant, apres] of paires) {
+      const v = localStorage.getItem(avant);
+      if (v !== null) {
+        if (localStorage.getItem(apres) === null) localStorage.setItem(apres, v);
+        localStorage.removeItem(avant);
+      }
+    }
+  } catch (e) {}
+})();
 
 // ---- Traductions ----
 const I18N = {
   fr: {
     tagline: "3 sources réunies · classement et lettres par IA",
-    cvLoad: "📄 Charger mon CV (PDF)",
-    cvLoaded: "📄 CV mémorisé ✓",
+    warnPrefix: "Avertissement : ",
+    threshold: "seuil",
+    rephrase: "Essaye de reformuler !",
+    themeGroup: "Thème clair ou sombre",
+    themeDay: "Jour",
+    themeNight: "Nuit",
+    rigSample: "Échantillon",
+    rigParams: "Paramètres",
+    rigSources: "Sources interrogées",
+    fieldCity: "Ville",
+    fieldKeyword: "Intitulé du poste",
+    cvLoad: "Charger mon CV (PDF)",
+    cvLoaded: "CV mémorisé",
     cvHintEmpty: "Charge ton CV : l'appli trouve et classe les offres pour toi. Ou cherche directement ci-dessous.",
     cvHintSaved: "Profil mémorisé.",
-    profileToggle: "Voir / modifier mon profil",
+    profileToggle: "Éditer le profil",
     forget: "Oublier mon CV",
     profileIntro: "Ce résumé sert au classement des offres, aux lettres de motivation et à l'adaptation du CV. Corrige-le librement : c'est TA version qui fait foi, pas celle de l'IA.",
     fieldHeadline: "Titre du profil",
     fieldSummary: "Résumé du parcours (~100 mots)",
     fieldSkills: "Compétences (séparées par des virgules)",
     save: "Enregistrer mon profil",
-    saved: "Enregistré ✓ (utilisé pour les prochains classements, lettres et adaptations)",
+    saved: "Enregistré (utilisé pour les prochains classements, lettres et adaptations)",
     city: "Ville",
-    keyword: "Intitulé du poste — ex. développeur, comptable…",
+    keyword: "Intitulé du poste (ex. développeur, comptable)",
     search: "Rechercher",
-    rank: "✨ Classer selon mon CV",
+    rank: "Classer selon mon CV",
     emptyStart: "Charge ton CV ou lance une recherche pour voir les offres.",
     emptyNone: "Aucune offre trouvée pour cette recherche.",
     letterTitle: "Brouillon de lettre",
     letterHint: "C'est un brouillon : personnalise-le avant de l'envoyer (une lettre IA brute, ça se repère).",
     close: "Fermer",
     copy: "Copier",
-    copied: "Copié ✓",
-    madeBy: "Développé par",
+    copied: "Copié",
+    madeBy: "par",
     // L'appli s'explique elle-même
     howShow: "Comment ça marche ?",
     howHide: "Masquer",
-    howTitle: "À quoi sert JobTrack ?",
-    howLead: "JobTrack réunit les offres au même endroit et se sert de ton CV comme filtre : tu ne lis que ce qui te concerne, et tu postules avec un CV taillé pour l'offre.",
+    howTitle: "À quoi sert CRIBLE ?",
+    howLead: "CRIBLE réunit les offres au même endroit et se sert de ton CV comme filtre : tu ne lis que ce qui te concerne, et tu postules avec un CV taillé pour l'offre.",
     how1t: "Tu charges ton CV (PDF)",
-    how1d: "Il est lu une fois, pour en sortir un profil : titre, résumé, compétences, expériences. Le PDF n'est stocké nulle part. Le profil reste dans ton navigateur et tu peux le corriger à la main — c'est ta version qui compte.",
+    how1d: "Il est lu une fois, pour en sortir un profil : titre, résumé, compétences, expériences. Le PDF n'est stocké nulle part. Le profil reste dans ton navigateur et tu peux le corriger à la main. C'est ta version qui compte.",
     how2t: "Les offres viennent de 3 sources",
     how2d: "France Travail, Adzuna (l'équivalent d'Indeed) et Meteojob, interrogés en même temps pour ta ville et ton intitulé de poste. Une seule liste au bout.",
     how3t: "Chaque offre est notée pour toi",
     how3d: "Un score en %, et une phrase qui dit pourquoi. Les meilleures remontent en haut. Tu ne lis plus les 40 autres.",
     how4t: "Tu repars avec une lettre et un CV adaptés",
     how4d: "« Brouillon de lettre » te donne une base à personnaliser. « Adapter mon CV » retravaille tes expériences pour cette offre précise, en trois passes : ce qu'un recruteur voit en 10 secondes, une réécriture chiffrée, puis une simulation de lecture au milieu de 200 CV et du filtre ATS.",
-    howFoot: "<strong>Ce que l'appli ne fait pas :</strong> inventer un truc qui n'est pas dans ton CV. Quand un chiffre lui manque, elle écrit <code>[à chiffrer]</code> et te laisse le remplir. Elle ne postule pas à ta place, et elle ne va pas te rendre parfait à l'entretien — là-dessus t'es tout seul.",
+    howFoot: "<strong>Ce que l'appli ne fait pas :</strong> inventer un truc qui n'est pas dans ton CV. Quand un chiffre lui manque, elle écrit <code>[à chiffrer]</code> et te laisse le remplir. Elle ne postule pas à ta place, et elle ne va pas te rendre parfait à l'entretien. Là-dessus t'es tout seul.",
 
-    privacy: "🔒 <strong>Confidentialité</strong> — Ton CV n'est jamais stocké sur nos serveurs : le PDF est transmis une seule fois à l'API Claude (Anthropic) pour en extraire un profil et tes expériences, puis oublié côté serveur. Le PDF lui-même n'est conservé nulle part. Le profil extrait reste uniquement dans TON navigateur (localStorage) et s'efface via « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses propres cookies techniques. Aucune donnée n'est revendue ni partagée au-delà de ces traitements.",
+    privacy: "<strong>Confidentialité</strong> : ton CV n'est jamais stocké sur nos serveurs : le PDF est transmis une seule fois à l'API Claude (Anthropic) pour en extraire un profil et tes expériences, puis oublié côté serveur. Le PDF lui-même n'est conservé nulle part. Le profil extrait reste uniquement dans TON navigateur (localStorage) et s'efface via « Oublier mon CV ». L'hébergeur (Vercel) peut déposer ses propres cookies techniques. Aucune donnée n'est revendue ni partagée au-delà de ces traitements.",
 
     // Progression
     analyzingTitle: "Analyse de ton CV en cours…",
@@ -69,24 +101,24 @@ const I18N = {
     searching: "Recherche en cours…",
 
     // Cartes
-    matchBadge: "✨ {n}% pour toi",
-    letterBtn: "✉️ Brouillon de lettre",
-    tailorBtn: "🎯 Adapter mon CV",
+    matchBadge: "{n}%",
+    letterBtn: "Brouillon de lettre",
+    tailorBtn: "Adapter mon CV",
     resultsLine: "{total} offres à {ville} · {ft} France Travail, {adz} Adzuna, {mj} Meteojob",
-    rankedLine: "Classées pour toi — {n} offres, les meilleures d'abord.",
+    rankedLine: "Classées pour toi : {n} offres, les meilleures d'abord.",
     forgotten: "CV oublié.",
     errPrefix: "Erreur : ",
     errRank: "Erreur classement : ",
     errCv: "Erreur analyse CV : ",
     drafting: "Rédaction du brouillon en cours…",
-    draftFor: "Brouillon — ",
+    draftFor: "Brouillon : ",
 
     // Aperçu CV
     noXp: "Aucune expérience détaillée n'a été extraite : l'adaptation de CV ne sera pas disponible.",
     xpTitle: "Expériences retenues",
 
     // Adaptation
-    tailorTitle: "Adapter mon CV — ",
+    tailorTitle: "Adapter mon CV : ",
     tailorStep1: "Regard du recruteur",
     tailorStep2: "Réécriture XYZ",
     tailorStep3: "Filtre ATS",
@@ -94,7 +126,7 @@ const I18N = {
     missingTitle: "5 mots-clés manquants",
     flagsTitle: "3 signaux d'alerte",
     compareTitle: "Comparatif : ton CV / le CV adapté",
-    compareNote: "Rien n'a été inventé. Les mentions [à chiffrer] sont des trous à remplir toi-même avec de vrais chiffres — c'est là que se gagne un entretien.",
+    compareNote: "Rien n'a été inventé. Les mentions [à chiffrer] sont des trous à remplir toi-même avec de vrais chiffres. C'est là que se gagne un entretien.",
     changesTitle: "Ce qui a changé",
     atsTitle: "Passage au crible : ATS + 200 CV d'affilée",
     ignoredTitle: "Ce qui serait ignoré",
@@ -108,45 +140,56 @@ const I18N = {
   },
   en: {
     tagline: "3 sources combined · AI ranking and cover letters",
-    cvLoad: "📄 Upload my CV (PDF)",
-    cvLoaded: "📄 CV saved ✓",
+    warnPrefix: "Warning: ",
+    threshold: "threshold",
+    rephrase: "Try rewording it!",
+    themeGroup: "Light or dark theme",
+    themeDay: "Day",
+    themeNight: "Night",
+    rigSample: "Sample",
+    rigParams: "Parameters",
+    rigSources: "Sources queried",
+    fieldCity: "City",
+    fieldKeyword: "Job title",
+    cvLoad: "Upload my CV (PDF)",
+    cvLoaded: "CV saved",
     cvHintEmpty: "Upload your CV: the app finds and ranks jobs for you. Or search directly below.",
     cvHintSaved: "Profile saved.",
-    profileToggle: "View / edit my profile",
+    profileToggle: "Edit profile",
     forget: "Forget my CV",
-    profileIntro: "This summary powers job ranking, cover letters and CV tailoring. Edit it freely — YOUR version is the one that counts, not the AI's.",
+    profileIntro: "This summary powers job ranking, cover letters and CV tailoring. Edit it freely. YOUR version is the one that counts, not the AI's.",
     fieldHeadline: "Profile headline",
     fieldSummary: "Career summary (~100 words)",
     fieldSkills: "Skills (comma separated)",
     save: "Save my profile",
-    saved: "Saved ✓ (used for future ranking, letters and tailoring)",
+    saved: "Saved (used for future ranking, letters and tailoring)",
     city: "City",
-    keyword: "Job title — e.g. developer, accountant…",
+    keyword: "Job title (e.g. developer, accountant)",
     search: "Search",
-    rank: "✨ Rank against my CV",
+    rank: "Rank against my CV",
     emptyStart: "Upload your CV or run a search to see jobs.",
     emptyNone: "No jobs found for this search.",
     letterTitle: "Cover letter draft",
     letterHint: "This is a draft: personalise it before sending (raw AI letters are easy to spot).",
     close: "Close",
     copy: "Copy",
-    copied: "Copied ✓",
-    madeBy: "Built by",
+    copied: "Copied",
+    madeBy: "by",
     howShow: "How does it work?",
     howHide: "Hide",
-    howTitle: "What is JobTrack for?",
-    howLead: "JobTrack pulls the postings into one place and uses your CV as the filter: you only read what concerns you, and you apply with a CV cut for that job.",
+    howTitle: "What is CRIBLE for?",
+    howLead: "CRIBLE pulls the postings into one place and uses your CV as the filter: you only read what concerns you, and you apply with a CV cut for that job.",
     how1t: "You upload your CV (PDF)",
-    how1d: "It gets read once, to pull out a profile: headline, summary, skills, experience. The PDF is stored nowhere. The profile stays in your browser and you can edit it by hand — your version is the one that counts.",
+    how1d: "It gets read once, to pull out a profile: headline, summary, skills, experience. The PDF is stored nowhere. The profile stays in your browser and you can edit it by hand. Your version is the one that counts.",
     how2t: "Jobs come in from 3 sources",
     how2d: "France Travail, Adzuna (the Indeed equivalent) and Meteojob, queried at once for your city and job title. One list at the end.",
     how3t: "Every job is scored for you",
     how3d: "A % score, and one line saying why. The best matches rise to the top. You stop reading the other 40.",
     how4t: "You leave with a tailored letter and CV",
     how4d: "“Cover letter draft” gives you a base to personalise. “Tailor my CV” reworks your experience for that specific posting in three passes: what a recruiter sees in 10 seconds, a quantified rewrite, then a simulated read in the middle of 200 CVs and the ATS filter.",
-    howFoot: "<strong>What the app does not do:</strong> invent something that is not in your CV. When a number is missing it writes <code>[to quantify]</code> and leaves it to you. It does not apply on your behalf, and it will not make you perfect in the interview — that part is on you.",
+    howFoot: "<strong>What the app does not do:</strong> invent something that is not in your CV. When a number is missing it writes <code>[to quantify]</code> and leaves it to you. It does not apply on your behalf, and it will not make you perfect in the interview. That part is on you.",
 
-    privacy: "🔒 <strong>Privacy</strong> — Your CV is never stored on our servers: the PDF is sent once to the Claude API (Anthropic) to extract a profile and your experience, then forgotten server-side. The PDF itself is kept nowhere. The extracted profile stays only in YOUR browser (localStorage) and is erased via “Forget my CV”. The host (Vercel) may set its own technical cookies. No data is sold or shared beyond these operations.",
+    privacy: "<strong>Privacy</strong>: your CV is never stored on our servers: the PDF is sent once to the Claude API (Anthropic) to extract a profile and your experience, then forgotten server-side. The PDF itself is kept nowhere. The extracted profile stays only in YOUR browser (localStorage) and is erased via “Forget my CV”. The host (Vercel) may set its own technical cookies. No data is sold or shared beyond these operations.",
 
     analyzingTitle: "Analysing your CV…",
     analyzingSteps: ["Reading the PDF", "Extracting profile and experience", "Searching for jobs", "Ranking against your profile"],
@@ -154,22 +197,22 @@ const I18N = {
     rankingSteps: ["Comparing each job to your background", "Sorting the best matches first"],
     searching: "Searching…",
 
-    matchBadge: "✨ {n}% match",
-    letterBtn: "✉️ Cover letter draft",
-    tailorBtn: "🎯 Tailor my CV",
+    matchBadge: "{n}%",
+    letterBtn: "Cover letter draft",
+    tailorBtn: "Tailor my CV",
     resultsLine: "{total} jobs in {ville} · {ft} France Travail, {adz} Adzuna, {mj} Meteojob",
-    rankedLine: "Ranked for you — {n} jobs, best matches first.",
+    rankedLine: "Ranked for you: {n} jobs, best matches first.",
     forgotten: "CV forgotten.",
     errPrefix: "Error: ",
     errRank: "Ranking error: ",
     errCv: "CV analysis error: ",
     drafting: "Writing the draft…",
-    draftFor: "Draft — ",
+    draftFor: "Draft: ",
 
     noXp: "No detailed experience was extracted: CV tailoring will not be available.",
     xpTitle: "Experience found",
 
-    tailorTitle: "Tailor my CV — ",
+    tailorTitle: "Tailor my CV: ",
     tailorStep1: "Recruiter's eye",
     tailorStep2: "XYZ rewrite",
     tailorStep3: "ATS filter",
@@ -177,7 +220,7 @@ const I18N = {
     missingTitle: "5 missing keywords",
     flagsTitle: "3 red flags",
     compareTitle: "Side by side: your CV / the tailored CV",
-    compareNote: "Nothing was invented. Any [to quantify] marker is a gap for you to fill with real numbers — that is where interviews are won.",
+    compareNote: "Nothing was invented. Any [to quantify] marker is a gap for you to fill with real numbers. That is where interviews are won.",
     changesTitle: "What changed",
     atsTitle: "Under scrutiny: ATS + 200 CVs in a row",
     ignoredTitle: "What would be skipped",
@@ -301,7 +344,7 @@ function renderCvCard() {
       const row = document.createElement("div");
       row.className = "xp-row";
       const role = document.createElement("strong");
-      role.textContent = e.role || "—";
+      role.textContent = e.role || "·";
       const meta = document.createElement("span");
       meta.textContent = [e.company, e.period].filter(Boolean).join(" · ");
       row.append(role, meta);
@@ -364,24 +407,16 @@ function renderCards(offers) {
     card.target = "_blank";
     card.rel = "noopener noreferrer";
 
-    const cls =
-      o.source === "Meteojob" ? "src-mj" :
-      o.source === "Adzuna" ? "src-adz" : "src-ft";
-    card.className = "card " + cls;
+    card.className = "card";
 
     if (typeof o.matchScore === "number") {
       const match = document.createElement("span");
       match.className = "match " + matchClass(o.matchScore);
       match.textContent = t("matchBadge", { n: o.matchScore });
+      // La barre de mesure lit sa longueur et sa couleur ici (voir styles.css).
+      card.style.setProperty("--score", o.matchScore);
       card.append(match);
     }
-
-    const badgeCls =
-      o.source === "Meteojob" ? "mj" :
-      o.source === "Adzuna" ? "adz" : "ft";
-    const badge = document.createElement("span");
-    badge.className = "badge " + badgeCls;
-    badge.textContent = o.source;
 
     const title = document.createElement("div");
     title.className = "card-title";
@@ -389,17 +424,41 @@ function renderCards(offers) {
 
     const meta = document.createElement("div");
     meta.className = "card-meta";
-    const bits = [o.company, o.contract, o.hours].filter(Boolean).join(" · ");
-    meta.append(document.createTextNode(bits));
+    // La source ouvre la ligne de faits sous forme d'étiquette encadrée :
+    // repérable d'un coup d'œil, sans redevenir un sourcil au-dessus du titre.
+    if (o.source) {
+      const src = document.createElement("span");
+      src.className = "source-tag";
+      src.textContent = o.source;
+      meta.append(src);
+    }
+    meta.append(document.createTextNode(o.company || ""));
+
+    // Le flanc droit de la ligne était vide sur toute sa hauteur : il porte
+    // maintenant les faits, empilés et alignés à droite, toujours au même endroit.
+    const facts = document.createElement("div");
+    facts.className = "card-facts";
+    const conditions = [o.contract, o.hours].filter(Boolean).join(" · ");
+    if (conditions) {
+      const li = document.createElement("span");
+      li.textContent = conditions;
+      facts.append(li);
+    }
+    if (o.location) {
+      const loc = document.createElement("span");
+      loc.className = "fact-location";
+      loc.textContent = o.location;
+      facts.append(loc);
+    }
     if (o.salary) {
-      if (bits) meta.append(document.createTextNode(" · "));
       const sal = document.createElement("span");
       sal.className = "salary";
       sal.textContent = o.salary;
-      meta.append(sal);
+      facts.append(sal);
     }
 
-    card.append(badge, title, meta);
+    card.append(title, meta);
+    if (facts.childElementCount) card.append(facts);
     if (o.description) {
       const desc = document.createElement("div");
       desc.className = "card-desc";
@@ -468,12 +527,36 @@ function refreshCvUi() {
 }
 
 // La présentation s'efface d'elle-même dès qu'un CV est là : elle a fait son travail.
+//
+// Elle passe AUSSI devant le banc de mesure tant que le visiteur est nouveau.
+// Un ordre fixe se trompe forcément sur la moitié des gens : l'expliquer en
+// premier à chaque visite fait scroller un mur de texte à l'habitué, et la
+// laisser en dessous laisse le nouveau venu devant un formulaire qu'il ne sait
+// pas quoi remplir. On se sert de l'état qui existe déjà — un CV chargé, ou un
+// « Masquer » cliqué — comme preuve que la présentation a fait son travail.
 function renderHowto() {
   const box = document.getElementById("howto");
   const open = document.getElementById("howtoOpen");
   const visible = howtoForced || (!howtoDismissed && !profile);
   box.classList.toggle("hidden", !visible);
   open.classList.toggle("hidden", visible);
+
+  const rig = document.getElementById("rig");
+  const nouveauVenu = !howtoDismissed && !profile;
+  // Déplacer un noeud déjà à sa place le retirerait puis le réinsérerait, ce
+  // qui casserait le focus si l'utilisateur est dans un champ du banc.
+  const dejaDevant = box.nextElementSibling === rig;
+  if (nouveauVenu && !dejaDevant) rig.parentNode.insertBefore(box, rig);
+  else if (!nouveauVenu && dejaDevant) rig.parentNode.insertBefore(rig, box);
+}
+
+// Seuil bas assumé : au-delà de 5 offres, il y a de quoi travailler et
+// l'indice deviendrait du bruit.
+const PEU_D_OFFRES = 5;
+
+function majIndiceReformuler(nb) {
+  const el = document.getElementById("rephraseHint");
+  el.classList.toggle("hidden", !(hasSearched && nb < PEU_D_OFFRES));
 }
 
 // ---- Recherche ----
@@ -497,6 +580,10 @@ async function runSearch() {
 
     lastOffers = data.offers || [];
     hasSearched = true;
+    // Sous 5 offres, le problème est presque toujours l'intitulé : trop précis,
+    // ou un mot que les sources n'emploient pas. On le dit là où on le corrige,
+    // sous le champ, plutôt que dans la ligne de résultats.
+    majIndiceReformuler(lastOffers.length);
     tailorCache.clear();
     renderCards(lastOffers);
     refreshCvUi();
@@ -505,7 +592,7 @@ async function runSearch() {
       total: data.counts.total, ville: data.ville || ville,
       ft: data.counts.ft, adz: data.counts.adz, mj: data.counts.mj,
     });
-    if (data.errors && data.errors.length) line += " · ⚠ " + data.errors.join(" | ");
+    if (data.errors && data.errors.length) line += " · " + t("warnPrefix") + data.errors.join(" | ");
     status.textContent = line;
     return true;
   } catch (e) {
@@ -536,7 +623,7 @@ async function analyzeCv(file) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
-  if (data.warning) document.getElementById("statusLine").textContent = "⚠ " + data.warning;
+  if (data.warning) document.getElementById("statusLine").textContent = t("warnPrefix") + data.warning;
   return data.profile;
 }
 
@@ -565,7 +652,7 @@ async function runMatch(silent) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
-    if (data.warning) status.textContent = "⚠ " + data.warning;
+    if (data.warning) status.textContent = t("warnPrefix") + data.warning;
 
     if (!silent) progressStep(1);
 
@@ -614,7 +701,7 @@ async function openLetter(idx) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
     txt.value = data.letter || "";
-    if (data.warning) document.getElementById("letterStatus").textContent = "⚠ " + data.warning;
+    if (data.warning) document.getElementById("letterStatus").textContent = t("warnPrefix") + data.warning;
   } catch (e) {
     txt.value = t("errPrefix") + e.message;
   }
@@ -867,7 +954,7 @@ function tailoredCvText() {
   if (!result || !result.experiences) return "";
   return result.experiences
     .map((e) => {
-      const head = [e.role, e.company, e.period].filter(Boolean).join(" — ");
+      const head = [e.role, e.company, e.period].filter(Boolean).join(" · ");
       return head + "\n" + (e.bullets || []).map((b) => "• " + b).join("\n");
     })
     .join("\n\n");
@@ -1006,7 +1093,29 @@ document.getElementById("ville").addEventListener("keydown", (e) => {
   if (e.key === "Enter") searchAndMaybeMatch();
 });
 
+// ---- Jour / nuit ----
+// Le thème est déjà posé sur <html> par le script en tête de page, avant le
+// premier rendu : sans ça, un visiteur en jour verrait le fond graphite clignoter
+// le temps que ce fichier se charge. Ici on ne fait que refléter l'état dans les
+// boutons et enregistrer un changement.
+const THEME_KEY = "cribleTheme";
+
+function applyTheme(theme) {
+  const jour = theme === "jour";
+  document.documentElement.dataset.theme = jour ? "jour" : "nuit";
+  document.getElementById("themeJour").setAttribute("aria-pressed", jour ? "true" : "false");
+  document.getElementById("themeNuit").setAttribute("aria-pressed", jour ? "false" : "true");
+}
+
+for (const [id, theme] of [["themeJour", "jour"], ["themeNuit", "nuit"]]) {
+  document.getElementById(id).addEventListener("click", () => {
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* mode privé */ }
+    applyTheme(theme);
+  });
+}
+
 // ---- Init ----
 loadState();
+applyTheme(document.documentElement.dataset.theme);
 applyLang();
 renderCvCard();

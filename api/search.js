@@ -54,7 +54,17 @@ async function getFtToken() {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
-  if (!r.ok) throw new Error("token HTTP " + r.status);
+  if (!r.ok) {
+    // Le serveur d authentification dit precisement ce qui cloche
+    // (invalid_client = identifiants refuses, invalid_scope = droits manquants).
+    // Sans son message, « token HTTP 400 » laisse chercher dans le vide.
+    let motif = "";
+    try {
+      const err = JSON.parse(await r.text());
+      motif = err.error_description || err.error || "";
+    } catch {}
+    throw new Error("token HTTP " + r.status + (motif ? " — " + motif : ""));
+  }
   const j = await r.json();
   if (!j.access_token) throw new Error("pas de token (identifiants ?)");
   return j.access_token;
@@ -85,6 +95,8 @@ async function fetchFranceTravail(keyword, communeInsee) {
     salary: o.salaire && o.salaire.libelle ? o.salaire.libelle : "",
     hours: o.dureeTravailLibelleConverti || o.dureeTravailLibelle || "",
     contract: o.typeContratLibelle || "",
+    // Le lieu decide souvent : une recherche « Toulouse » ramene Muret et Blagnac.
+    location: o.lieuTravail && o.lieuTravail.libelle ? o.lieuTravail.libelle : "",
     description: (o.description || "").replace(/\s+/g, " ").slice(0, 200),
     url:
       o.origineOffre && o.origineOffre.urlOrigine
@@ -133,6 +145,7 @@ async function fetchMeteojobPage(keyword, page, city) {
       salary: "",
       hours: "",
       contract: "",
+      location: "",
       description: "",
       url,
     });
@@ -196,14 +209,19 @@ async function fetchAdzuna(keyword, city) {
   const results = j.results || [];
 
   return results.map((o) => {
+    // Adzuna annonce tout « / an », y compris des taux horaires : on a vu sortir
+    // « 12 € - 12 € / an ». Sous un plancher annuel plausible la periode est
+    // inconnue, donc on n'affiche rien plutot qu'un chiffre faux.
+    const PLANCHER_ANNUEL = 5000;
     let salary = "";
-    if (o.salary_min || o.salary_max) {
+    const plafond = Math.max(Number(o.salary_min) || 0, Number(o.salary_max) || 0);
+    if (plafond >= PLANCHER_ANNUEL) {
       const min = o.salary_min ? frMoney(o.salary_min) : "";
       const max = o.salary_max ? frMoney(o.salary_max) : "";
       salary =
-        (min && max ? `${min} € - ${max} €` : `${min || max} €`) +
+        (min && max && min !== max ? `${min} € - ${max} €` : `${min || max} €`) +
         " / an" +
-        (o.salary_is_predicted === "1" ? " (estimé)" : "");
+        (o.salary_is_predicted === "1" ? " (estime)" : "");
     }
     let contract = "";
     if (o.contract_type === "permanent") contract = "CDI";
@@ -219,6 +237,9 @@ async function fetchAdzuna(keyword, city) {
       salary,
       hours,
       contract,
+      location: o.location && o.location.display_name
+        ? String(o.location.display_name).split(",")[0].trim()
+        : "",
       description: (o.description || "").replace(/\s+/g, " ").slice(0, 200),
       url: o.redirect_url || "#",
     };

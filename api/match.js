@@ -12,7 +12,7 @@ const MAX_TOKENS = 4000;
 function buildOffersText(offers) {
   return offers
     .map((o, i) => {
-      const meta = [o.company, o.contract].filter(Boolean).join(" — ");
+      const meta = [o.company, o.contract].filter(Boolean).join(" · ");
       const desc = (o.description || "").slice(0, 180);
       return `${i}. ${o.title}${meta ? " (" + meta + ")" : ""}${desc ? " : " + desc : ""}`;
     })
